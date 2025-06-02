@@ -80,17 +80,17 @@ app.put('/user_admin/:id', async (req, res) => {
     }
     res.status(201).json({message:"Usuário atualizado com sucesso!",});
 }); 
-/* Deletar produto
+
 app.delete("/user_admin/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        let { error } = await supabase.from('user_admin').delete().eq('id', id);
+        let { error } = await supabase.from('user_admin').delete().eq('admin_id', id);
         if (error) throw error;
-        res.status(204).send();
+        return res.status(200).json({ message: "Usuário deletado com sucesso!" });
     } catch (error) {
         res.status(400).json({ erro: "Erro ao deletar usuário" });
     }
-}); */
+}); 
 
 const port = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
