@@ -34,10 +34,11 @@ app.get("/user_admin", async (req, res) =>{
 app.get("/user_admin/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        let { data, error } = await supabase.from('user_admin').select('*').eq('id', id).single();
+        let { data, error } = await supabase.from('user_admin').select('*').eq('admin_id', id).single();
         if (error) throw error;
         res.status(200).json(data);
     } catch (error) {
+        console.log(error)
         res.status(404).json({ erro: "Administrador não encontrado" });
     }
 })
@@ -62,20 +63,24 @@ app.post("/user_admin", async (req, res) => {
    })
 });
 
-/* Atualizar produto
-/app.put("/user_admin/:id", async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { nome, preco } = req.body;
-        let { data, error } = await supabase.from('user_admin').update({ nome, preco }).eq('id', id).single();
-        if (error) throw error;
-        res.status(200).json(data);
-    } catch (error) {
-        res.status(400).json({ erro: "Erro ao atualizar usuário" });
-    }
-// });
 
-// Deletar produto
+app.put('/user_admin/:id', async (req, res) => {
+    const { error } = await supabase
+        .from('user_admin')
+        .update({
+            admin_username: req.body.admin_username,
+            admin_email: req.body.admin_email,
+            admin_password: req.body.admin_password
+            //admin_phone: req.body.admin_phone
+        })
+        .eq('admin_id', req.params.id);
+    if (error) {
+        console.log(error)
+        return res.status(400).json({ error: "Erro ao atualizar usuário" });
+    }
+    res.status(201).json({message:"Usuário atualizado com sucesso!",});
+}); 
+/* Deletar produto
 app.delete("/user_admin/:id", async (req, res) => {
     try {
         const { id } = req.params;
@@ -85,9 +90,7 @@ app.delete("/user_admin/:id", async (req, res) => {
     } catch (error) {
         res.status(400).json({ erro: "Erro ao deletar usuário" });
     }
-});
-*/
+}); */
+
 const port = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
-
-
