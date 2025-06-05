@@ -45,22 +45,61 @@ app.get("/user_admin/:id", async (req, res) => {
 
 
 app.post("/user_admin", async (req, res) => {
-  const {data, error } = await supabase
-    .from('user_admin')
-    .insert([{
-      admin_username: req.body.admin_username,
-      admin_email: req.body.admin_email,
-      admin_password: req.body.admin_password
-      //admin_phone: req.body.admin_phone
-    }])
-    .select('*');
+    const { admin_username, admin_email, admin_password /*, admin_phone_number */} = req.body;
 
-  if (error) {
-    console.log(error);
-    return res.status(400).json({ error: "Erro ao criar usuário" });
-  }
-  res.status(201).json({ message: "Usuário criado com sucesso!",
-   })
+    if (!admin_username || !admin_email || !admin_password /*||!admin_phone_number */) {
+        return res.status(400).json({ error: "Usuário, email e senha são obrigatórios." });
+    }
+
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(admin_email)) {
+        return res.status(400).json({ error: "Email inválido." });
+    }
+
+    
+    const { data: existingUser, error: selectError } = await supabase
+        .from('user_admin')
+        .select('admin_id')
+        .eq('admin_email', admin_email)
+        .single();
+
+    if (existingUser) {
+        return res.status(400).json({ error: "Email já cadastrado." });
+    }
+
+    if (admin_password.length < 6) {
+        return res.status(400).json({ error: "A senha deve ter pelo menos 6 caracteres." });
+    }
+    /* if (admin_phone_number < X (Não sei quantia minima)){
+        return res.status(400).json({ error: "O número de telefone deve ter pelo menos X dígitos." });
+    }
+    const { data: existingNumber, error: selectError } = await supabase
+        .from('user_admin')
+        .select('admin_phone_number')
+        .eq('admin_phone_number', admin_phone_number)
+        .single();
+
+    if (existingNumber) {
+        return res.status(400).json({ error: "Número já cadastrado." });
+    }
+    */
+
+    const { data, error } = await supabase
+        .from('user_admin')
+        .insert([{
+            admin_username,
+            admin_email,
+            admin_password //, quando passar para o servidor oficial, retire o comentario
+            //admin_phone_number
+        }])
+        .select('*');
+
+    if (error) {
+        console.log(error);
+        return res.status(400).json({ error: "Erro ao criar usuário" });
+    }
+    res.status(201).json({ message: "Usuário criado com sucesso!" });
 });
 
 
