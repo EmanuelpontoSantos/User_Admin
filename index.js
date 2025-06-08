@@ -2,6 +2,8 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 const bodyParser = require('body-parser');
+const bcrypt = require('bcrypt')
+
 
 const PORT = process.env.PORT || 3000;
 
@@ -84,9 +86,11 @@ app.get("/user_admin/:id", async (req, res) => {
 
 //Cria um administrador novo
 app.post("/user_admin", async (req, res) => {
-    const { admin_username, admin_email, admin_password, admin_cnpj, admin_phone_number} = req.body;
+    const salt =await bcrypt.genSalt(10); //Gera um salt para o hash da senha do usuario 
+    const hashedPassword = await bcrypt.hash(req.body.admin_password, salt); //Cria um hash (Encriptar) para a senha do usuario
+    const { admin_username, admin_email, admin_password, /*admin_cnpj, admin_phone_number*/} = req.body;
 //verifica se a aba de email, usuario, senha, telefone e cpnj estão preenchidos (Caso for utilizar a versão teste, deixe phone e CNPJ como comentario)
-    if (!admin_username || !admin_email || !admin_password||!admin_phone_number ||admin_cnpj) {
+    if (!admin_username || !admin_email || !admin_password /*||!admin_phone_number ||admin_cnpj*/) {
         return res.status(400).json({ error: "Usuário, email, senha e número são obrigatórios." });
     }
 
@@ -110,7 +114,7 @@ app.post("/user_admin", async (req, res) => {
     if (admin_password.length < 6) {
         return res.status(400).json({ error: "A senha deve ter pelo menos 6 caracteres." });
     } //o mesmo de cima, só que com número
-     if (admin_phone_number < 9 ){
+     /*if (admin_phone_number < 9 ){
         return res.status(400).json({ error: "O número de telefone deve ter pelo menos X dígitos." });
     } //mesma coisa que o usuario registrado, só que com o telefone
     const { data: existingNumber, error: selectNumberError } = await supabase
@@ -121,7 +125,7 @@ app.post("/user_admin", async (req, res) => {
 
     if (existingNumber) {
         return res.status(400).json({ error: "Número já cadastrado." });
-    }
+    } */
     
 //finalmente registra o usuario
     const { data, error } = await supabase
@@ -129,8 +133,9 @@ app.post("/user_admin", async (req, res) => {
         .insert([{
             admin_username,
             admin_email,
-            admin_password, 
-            admin_phone_number
+            admin_password: hashedPassword,
+            //admin_cnpj
+            //admin_phone_number
         }])
         .select('*');
 //mensagem de erro que envia mensagem ao terminal caso tenha um erro
@@ -139,6 +144,8 @@ app.post("/user_admin", async (req, res) => {
         return res.status(400).json({ error: "Erro ao criar usuário" });
     }
     res.status(201).json({ message: "Usuário criado com sucesso!" });
+    console.log(salt)
+    console.log (hashedPassword)
 });
 
 //modifica uma conta já registrada pelo ID no URL
@@ -150,6 +157,8 @@ app.put('/user_admin/:id', async (req, res) => {
             admin_email: req.body.admin_email,
             admin_password: req.body.admin_password,
             admin_phone: req.body.admin_phone
+            //,admin_cnpj
+            //admin_phone_number
         })
         .eq('admin_id', req.params.id);
     if (error) {
@@ -179,6 +188,36 @@ app.post("/user_adminData", async (req, res) =>{
         res.status(500).json({ erro: "Erro ao obter os admins" })
     }
 })
+// Segue a aba de login abaixo
+app.post("/user_admin/login", async (req, res) => {
+    try {
+        const { admin_email, admin_password } = req.body;
+
+        // Busca usuario e senha para login
+        const { data: user, error } = await supabase
+            .from("user_admin")
+            .select("*")
+            .eq("admin_email", admin_email)
+            .single();
+
+        if (error || !admin_email) {
+            return res.status(404).json({ error: "Usuário não encontrado" });
+        }
+
+        const samePassword = await bcrypt.compare(admin_password, user.admin_password);
+
+        if (samePassword) {
+            res.send("Login realizado com sucesso!");
+        } else {
+            res.status(401).json("Senha incorreta!");
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Erro ao comparar a senha" });
+    }
+});
+
+
 // Manda mensagem no terminal da posta que está funcionando
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Servidor rodando na porta ${PORT}`));
