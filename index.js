@@ -195,7 +195,7 @@ app.post("/user_admin/login", async (req, res) => {
     try {
         const { admin_email, admin_password } = req.body;
 
-        // Busca usuario e senha para login
+        // Busca email e senha para login
         const { data: user, error } = await supabase
             .from("user_admin")
             .select("*")
@@ -205,7 +205,7 @@ app.post("/user_admin/login", async (req, res) => {
         if (error || !admin_email) {
             return res.status(404).json({ error: "Usuário não encontrado" });
         }
-
+        //verifica se a senha (encriptada) é a mesma que a senha digitada
         const samePassword = await bcrypt.compare(admin_password, user.admin_password);
 
         if (samePassword) {
