@@ -23,8 +23,9 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
+//O API DE LOGIN É O /admin/login que está NO FINAL DO CÓDIGO
 
-// Rota de login do SUPABASE (eu tentei)
+/* Rota de login do SUPABASE (eu tentei)
 app.post('/login', async (req, res) => {
 const { email, password } = req.body;
 
@@ -54,6 +55,7 @@ async function testAdminAccess() {
   if (error) console.error('Erro:', error)
   else console.log('Dados admin:', data)
 }
+*/
 
 //Mensagem que aparece ao iniciar o servidor
 app.get("/", (req, res) => {
@@ -215,7 +217,7 @@ app.post("/user_admin/login", async (req, res) => {
         console.error(error);
         return res.status(500).json({ error: "Erro ao comparar a senha" });
     }
-});
+}); //LEMBRANDO: TODA SENHA REGISTRADA NO BD ESTÁ ENCRIPTADA, ENTÃO ANOTE PRA NÃO ESQUECER DEPOIS!
 
 
 // Manda mensagem no terminal da posta que está funcionando
